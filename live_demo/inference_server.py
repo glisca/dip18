@@ -273,7 +273,7 @@ class InferenceRunner(Thread):
     def load_sample_sequence(self, filename):
         if filename.endswith('.pkl'):
             # This is a pickle file that contains a motion sequence stored in angle-axis format
-            sample_sequence = pkl.load(open(filename, 'rb'))
+            sample_sequence = pkl.load(open(filename, 'rb'), encoding='latin1')
             poses = np.array(sample_sequence)
 
         elif filename.endswith('.npz'):
