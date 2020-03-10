@@ -29,7 +29,7 @@ class Configuration(object):
     Configuration class to setup experiments.
     """
 
-    KNOWN_DATA_PATHS = {'local':  "./data",  # TODO enter path to data here
+    KNOWN_DATA_PATHS = {'local':  "/home/lisca/data/dip/Synthetic_NPZ/", # "./data",  # TODO enter path to data here
                         'server': "./data"}  # TODO enter path to data here
 
     def __init__(self, **kwargs):
@@ -184,7 +184,7 @@ class Configuration(object):
         parser.add_argument('--json_file', type=str, help='Creates a model exactly how configured in the json file.')
 
         # Data management.
-        parser.add_argument('--data_file', required=False, default='v9', choices=['v9', 'own'],
+        parser.add_argument('--data_file', required=False, default='v9', choices=['v9', 'own', "v10", 'amass2imusim'],
                             help='Name of dataset file: v9 for AMASS, own for DIP-IMU')
         parser.add_argument('--' + C.PP_IMU_ORI_NORM, action="store_true",
                             help='Applies zero-mean unit-variance normalization on orientation.')
@@ -217,7 +217,7 @@ class Configuration(object):
         """
         parser.add_argument('--system', required=True, choices=list(Configuration.KNOWN_DATA_PATHS.keys()), type=str,
                             help='determines location of data and output paths')
-        parser.add_argument('--data_file', required=False, default='v9', choices=['v9', 'own'],
+        parser.add_argument('--data_file', required=False, default='v9', choices=['v9', 'own', "v10", 'amass2imusim'],
                             help='Name of dataset file: v9 for AMASS, own for DIP-IMU')
 
         # Experiment outputs.
