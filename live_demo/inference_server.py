@@ -315,7 +315,7 @@ class InferenceRunner(Thread):
 
                 pss_24jnt_aa[psId] = ps_24jnt_aa.reshape(72,)
 
-                poses = pss_24jnt_aa
+            poses = pss_24jnt_aa
 
         elif filename.endswith('.npz'):
             # This is a numpy file that was produced using the evaluation code
