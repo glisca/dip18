@@ -276,7 +276,7 @@ class InferenceRunner(Thread):
         if filename.endswith('.pkl'):
             # This is a pickle file that contains a motion sequence stored in angle-axis format
             sample_sequence = pkl.load(open(filename, 'rb'), encoding='latin1')
-            # poses = np.array(sample_sequence["gt"])
+#             poses = np.array(sample_sequence["gt"])
 
             # for fetching the SMPL poses from the synthetic dataset
             pss_15jnt_rt = np.array(sample_sequence["poses"])

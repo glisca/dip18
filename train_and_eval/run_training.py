@@ -17,14 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import tensorflow as tf
 from tf_train import TrainingEngine
-from constants import Constants
+# from constants import Constants
 from configuration import Configuration
 
 import argparse
 import os
 import glob
 
-C = Constants()
+# C = Constants()
 
 
 if __name__ == '__main__':
