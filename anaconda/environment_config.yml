@@ -1,7 +1,10 @@
 name: dip18
 channels:
+  - conda-forge
   - defaults
 dependencies:
+  - certifi=2018.8.24=py35_1
+  - nodejs=12.4.0=he1b5a44_0
   - _libgcc_mutex=0.1=main
   - backcall=0.1.0=py35_0
   - blas=1.0=mkl
@@ -9,7 +12,6 @@ dependencies:
   - bzip2=1.0.8=h7b6447c_0
   - ca-certificates=2020.1.1=0
   - cairo=1.14.12=h8948797_3
-  - certifi=2018.8.24=py35_1
   - cudatoolkit=8.0=3
   - cudnn=6.0.21=cuda8.0_0
   - cython=0.28.5=py35hf484d3e_0
