@@ -284,10 +284,8 @@ class ImuDatasetTF(ImuDataset):
     other frameworks.
     """
     def __init__(self, data_path, var_len_seq=False, preprocessing_ops=None, data_stats=None):
-        super(ImuDatasetTF, self).__init__(data_path,
-                                           var_len_seq=var_len_seq,
-                                           preprocessing_ops=preprocessing_ops,
-                                           data_stats=data_stats)
+        super(ImuDatasetTF, self).__init__(
+            data_path, var_len_seq=var_len_seq, preprocessing_ops=preprocessing_ops, data_stats=data_stats)
 
         # Add tensorflow data types.
         self.sample_tf_type = [tf.int32, tf.float32, tf.float32]

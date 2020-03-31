@@ -80,9 +80,9 @@ if __name__ == '__main__':
         config.set('learning_rate', 1e-4, override=True)
         experiment_name = "fine_tuning"
 
-    print('system', config.config['system'])
+#     print('system', config.config['system'])
     config.set_experiment_name(experiment_name=experiment_name)
     tf.set_random_seed(config.get('seed'))
-    training_engine = TrainingEngine(config, args.analyze_after_training,  early_stopping_tolerance=10,
-                                     is_fine_tuning=is_fine_tuning, data_stats=data_stats)
+    training_engine = TrainingEngine(
+        config, args.analyze_after_training, early_stopping_tolerance=10, is_fine_tuning=is_fine_tuning, data_stats=data_stats)
     training_engine.run()

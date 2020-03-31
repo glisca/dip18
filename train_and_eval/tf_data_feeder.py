@@ -53,14 +53,11 @@ class DataFeederTF(object):
         # shapes. However, batch generators such as tf.train.batch need to know tensor rank. Otherwise, it makes random
         # placeholder assignments (i.e., input is mapped to seq_len placeholder). This seems to be a Tensorflow bug.
         if shuffle:
-            self.input_queue = tf.RandomShuffleQueue(queue_capacity,
-                                                     min_after_dequeue=int(queue_capacity/2),
-                                                     dtypes=self.dataset.sample_tf_type,
-                                                     names=self.dataset.sample_key)
+            self.input_queue = tf.RandomShuffleQueue(
+                queue_capacity, min_after_dequeue=int(queue_capacity/2), dtypes=self.dataset.sample_tf_type, names=self.dataset.sample_key)
         else:
-            self.input_queue = tf.FIFOQueue(queue_capacity,
-                                            dtypes=self.dataset.sample_tf_type,
-                                            names=self.dataset.sample_key)
+            self.input_queue = tf.FIFOQueue(
+                queue_capacity, dtypes=self.dataset.sample_tf_type, names=self.dataset.sample_key)
 
         self.enqueue_op = self.input_queue.enqueue(self.queue_placeholders_dict)
         self.dequeue_op = self.input_queue.dequeue()

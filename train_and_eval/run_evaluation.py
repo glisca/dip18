@@ -101,25 +101,23 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                 print("Eval Key {} not found, continue.".format(eval_key))
                 continue
 
-            eval_dataset = dataset_cls(config.get(eval_key),
-                                       var_len_seq=True,
-                                       preprocessing_ops=preprocessing_ops)
+            eval_dataset = dataset_cls(
+                config.get(eval_key), var_len_seq=True, preprocessing_ops=preprocessing_ops)
+            
             assert eval_dataset.num_samples % batch_size == 0, 'number of samples must be divisible by batch size'
             num_eval_iterations = int(eval_dataset.num_samples/batch_size)
+            print("num_eval_iterations {}".format(num_eval_iterations))
 
             with tf.name_scope(eval_key):
                 eval_data_feeder = DataFeederTF(eval_dataset, 1, batch_size, queue_capacity=1024, shuffle=False)
-                data_placeholders = eval_data_feeder.batch_queue(dynamic_pad=eval_dataset.is_dynamic,
-                                                                 queue_capacity=512,
-                                                                 queue_threads=2)
-                eval_model = model_cls(config=config,
-                                       session=sess,
-                                       reuse=False,
-                                       mode="validation",
-                                       placeholders=data_placeholders,
-                                       input_dims=eval_dataset.input_dims,
-                                       target_dims=eval_dataset.target_dims,
-                                       data_stats=None)
+                
+                data_placeholders = eval_data_feeder.batch_queue(
+                    dynamic_pad=eval_dataset.is_dynamic, queue_capacity=512, queue_threads=2)
+                
+                eval_model = model_cls(
+                    config=config, session=sess, reuse=False, mode="validation",
+                    placeholders=data_placeholders, input_dims=eval_dataset.input_dims, target_dims=eval_dataset.target_dims,
+                    data_stats=None)
                 eval_model.build_graph()
 
                 # Load variables
@@ -157,8 +155,7 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
             sip_eval_sensors = [1, 2, 16, 17]
 
             # the remaining "sensors" are evaluation sensors
-            all_sensors = utils.SMPL_MAJOR_JOINTS if config.get('use_reduced_smpl') else list(
-                range(utils.SMPL_NR_JOINTS))
+            all_sensors = utils.SMPL_MAJOR_JOINTS if config.get('use_reduced_smpl') else list(range(utils.SMPL_NR_JOINTS))
             remaining_eval_sensors = [s for s in all_sensors if s not in tracking_sensors and s not in sip_eval_sensors]
 
             with utils.Stats(tracking_sensors, sip_eval_sensors, remaining_eval_sensors, logger) as stats:
@@ -176,10 +173,9 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
 
                     if birnn_eval_chunks:
                         np_batch = sess.run(tf_data_fetch)
-                        eval_out = eval_model.model.reconstruct_chunks(input_sequence=np_batch['inputs'],
-                                                                       target_sequence=np_batch['targets'],
-                                                                       len_past=len_past,
-                                                                       len_future=len_future)
+                        eval_out = eval_model.model.reconstruct_chunks(
+                            input_sequence=np_batch['inputs'], target_sequence=np_batch['targets'],
+                            len_past=len_past, len_future=len_future)
                         eval_out['mask'] = np_batch['mask']
                         eval_out['targets'] = np_batch['targets']
                         eval_out['prediction'] = eval_out['sample']
@@ -202,9 +198,8 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                         pred[j][:, :dof] = imu_root
                         targ[j][:, :dof] = imu_root
 
-                        ja_diffs, euc_diffs = utils.compute_metrics(prediction=pred[j:j + 1],
-                                                                    target=targ[j:j + 1],
-                                                                    compute_positional_error=False)
+                        ja_diffs, euc_diffs = utils.compute_metrics(
+                            prediction=pred[j:j + 1], target=targ[j:j + 1], compute_positional_error=False)
                         stats.add(ja_diffs, euc_diffs)
 
                 total_loss = total_loss/float(n_data) if n_data > 0 else 0.0
@@ -213,6 +208,7 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                 logger.print('\n*** Loss ***\n')
                 logger.print('average main loss per time step: {}\n'.format(total_loss))
                 logger.print('average l2 loss per time step  : {}\n'.format(total_loss_l2))
+
                 sip_stats = stats.get_sip_stats()
 
             performance_text_over_datasets += performance_text_format.format(eval_key, sip_stats[0], sip_stats[1])
@@ -256,6 +252,7 @@ if __name__ == '__main__':
         config_obj.set('eval_dir', os.path.join(model_dir, "evaluation"), override=True)
     else:
         config_obj.set('eval_dir', os.path.join(args.eval_dir, config_obj.get('model_id')), override=True)
+
     config_obj.set('model_dir', model_dir, override=True)  # in case folder is renamed.
 
     # Create evaluation directory if it does not exist yet
@@ -278,9 +275,6 @@ if __name__ == '__main__':
 
     for len_past_ in past_frames:
         for len_future_ in future_frames:
-            do_evaluation(config=config_obj,
-                          datasets=to_evaluate,
-                          len_past=len_past_,
-                          len_future=len_future_,
-                          verbose=args.verbose,
-                          save_predictions=args.save_predictions)
+            do_evaluation(
+                config=config_obj, datasets=to_evaluate, len_past=len_past_, len_future=len_future_, verbose=args.verbose,
+                save_predictions=args.save_predictions)

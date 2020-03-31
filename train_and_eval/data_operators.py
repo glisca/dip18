@@ -58,7 +58,8 @@ class Operator(object):
         operator_obj = Operator()
 
         if kwargs.get(C.PP_ZERO_MEAN_NORM, False):
-            operator_obj = NormalizeZeroMeanUnitVariance(data_mean=kwargs['mean_channel'], data_std=kwargs['std_channel'], operator_obj=operator_obj)
+            operator_obj = NormalizeZeroMeanUnitVariance(
+                data_mean=kwargs['mean_channel'][:], data_std=kwargs['std_channel'], operator_obj=operator_obj)
 
         return operator_obj
 

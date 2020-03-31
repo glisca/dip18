@@ -67,11 +67,9 @@ class TrainingEngine(object):
         self.global_step = tf.Variable(1, trainable=False, name='global_step')
 
         if config.get('learning_rate_type') == 'exponential':
-            self.learning_rate = tf.train.exponential_decay(config.get('learning_rate'),
-                                                            global_step=self.global_step,
-                                                            decay_steps=config.get('learning_rate_decay_steps'),
-                                                            decay_rate=config.get('learning_rate_decay_rate'),
-                                                            staircase=False)
+            self.learning_rate = tf.train.exponential_decay(
+                config.get('learning_rate'), global_step=self.global_step, decay_steps=config.get('learning_rate_decay_steps'),
+                decay_rate=config.get('learning_rate_decay_rate'), staircase=False)
             tf.summary.scalar('training/learning_rate', self.learning_rate, collections=["training_status"])
         elif config.get('learning_rate_type') == 'fixed':
             self.learning_rate = config.get('learning_rate')
@@ -83,7 +81,7 @@ class TrainingEngine(object):
 
         # Training model
         self.training_dataset, self.num_training_iterations = self.load_dataset(config.get('training_data'), data_stats)
-        print("# training steps per epoch: " + str(self.num_training_iterations))
+        print("training steps per epoch: " + str(self.num_training_iterations))
 
         # Validation model
         self.apply_validation = config.get('validate_model', False)
@@ -91,7 +89,7 @@ class TrainingEngine(object):
             self.validation_dataset, self.num_validation_iterations = self.load_dataset(config.get('validation_data'),
                                                                                         data_stats)
             assert not (self.num_validation_iterations == 0), "Not enough validation samples."
-            print("# validation steps per epoch: " + str(self.num_validation_iterations))
+            print("validation steps per epoch: " + str(self.num_validation_iterations))
 
     def run(self):
         # Models in different modes (training, validation, sampling, etc.)
@@ -118,11 +116,11 @@ class TrainingEngine(object):
     def create_model_graph(self, dataset, mode, reuse):
         # Create a tensorflow sub-graph that loads batches of samples.
         # (1) Create input pipeline
-        data_feeder = DataFeederTF(dataset, self.config.get('num_epochs'), self.config.get('batch_size'),
-                                   queue_capacity=1024)
-        data_placeholders = data_feeder.batch_queue(dynamic_pad=dataset.is_dynamic,
-                                                    queue_capacity=512,
-                                                    queue_threads=4)
+        data_feeder = DataFeederTF(
+            dataset, self.config.get('num_epochs'), self.config.get('batch_size'), queue_capacity=1024)
+
+        data_placeholders = data_feeder.batch_queue(
+            dynamic_pad=dataset.is_dynamic, queue_capacity=512, queue_threads=4)
 
         # (2) Create staging area for faster data transfer to GPU memory.
         if self.config.get('use_staging_area', False):
@@ -133,14 +131,9 @@ class TrainingEngine(object):
 
         # (3) Create model.
         with tf.name_scope(mode):
-            model = self.model_cls(config=self.config,
-                                   session=self.session,
-                                   reuse=reuse,
-                                   mode=mode,
-                                   placeholders=data_placeholders,
-                                   input_dims=dataset.input_dims,
-                                   target_dims=dataset.target_dims,
-                                   data_stats=None)
+            model = self.model_cls(
+                config=self.config, session=self.session, reuse=reuse, mode=mode,
+                placeholders=data_placeholders, input_dims=dataset.input_dims, target_dims=dataset.target_dims, data_stats=None)
             model.build_graph()
 
         return model, data_feeder, staging_area
@@ -207,8 +200,8 @@ class TrainingEngine(object):
             if self.config.get('grad_clip_by_value') > 0:
                 grads_and_vars_clipped = []
                 for grad, var in self.grads_and_vars:
-                    grads_and_vars_clipped.append((tf.clip_by_value(grad, -self.config.get('grad_clip_by_value'),
-                                                                    -self.config.get('grad_clip_by_value')), var))
+                    grads_and_vars_clipped.append(
+                        (tf.clip_by_value(grad, -self.config.get('grad_clip_by_value'), -self.config.get('grad_clip_by_value')), var))
                 self.grads_and_vars = grads_and_vars_clipped
 
             self.train_op = optimizer.apply_gradients(grads_and_vars=self.grads_and_vars, global_step=self.global_step)
@@ -252,7 +245,8 @@ class TrainingEngine(object):
             self.model_id = model_timestamp
             self.config.set('model_id', model_timestamp, override=True)
             self.model_dir = os.path.abspath(os.path.join(self.config.get('save_dir'), model_timestamp))
-            print("Saving to {}\n".format(self.model_dir))
+            print("Training Model.")
+            print("saving to {}\n".format(self.model_dir))
             self.config.set('model_dir', self.model_dir, override=True)
             self.start_epoch = 1
 
@@ -264,7 +258,7 @@ class TrainingEngine(object):
             self.config.set('model_id', model_timestamp, override=True)
             self.model_dir = os.path.abspath(os.path.join(self.config.get('save_dir'), model_timestamp))
             print("Fine-tuning Model.")
-            print("Saving to {}\n".format(self.model_dir))
+            print("saving to {}\n".format(self.model_dir))
             self.config.set('model_dir', self.model_dir, override=True)
             self.start_epoch = 1
             self.session.run(tf.assign(self.global_step, 1))
@@ -301,8 +295,8 @@ class TrainingEngine(object):
                     self.summary_writer.add_summary(summary_entry, step)
 
                 if self.apply_validation and step % self.training_evaluate_every_step == 0:
-                    validation_summary, validation_loss = self.validation_model.evaluation_step(step, epoch,
-                                                                                                self.num_validation_iterations)
+                    validation_summary, validation_loss = self.validation_model.evaluation_step(
+                        step, epoch, self.num_validation_iterations)
                     self.summary_writer.add_summary(validation_summary, step)
 
                     if validation_loss <= best_validation_loss:

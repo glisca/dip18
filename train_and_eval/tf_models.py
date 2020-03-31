@@ -177,8 +177,9 @@ class BaseTemporalModel(object):
         Builds loss terms.
         """
         # Function to get final loss value, i.e., average or sum.
-        self.reduce_loss_fn = get_reduce_loss_func(self.config.get('reduce_loss'),
-                                                   tf.reduce_sum(self.seq_loss_mask, axis=[1, 2]))
+        self.reduce_loss_fn = get_reduce_loss_func(
+            self.config.get('reduce_loss'), tf.reduce_sum(self.seq_loss_mask, axis=[1, 2]))
+
         # Legacy mode
         if self.nll_loss_config is not None:
             for idx, loss_type in enumerate(self.nll_loss_config['type']):
@@ -187,9 +188,8 @@ class BaseTemporalModel(object):
                     with tf.name_scope(loss_type):
                         # Negative log likelihood loss.
                         if loss_type == C.NLL_NORMAL:
-                            logli_term = tf_model_utils.logli_normal_isotropic(self.target_pieces[idx],
-                                                                               self.ops_model_output[C.OUT_MU],
-                                                                               self.ops_model_output[C.OUT_SIGMA])
+                            logli_term = tf_model_utils.logli_normal_isotropic(
+                                self.target_pieces[idx], self.ops_model_output[C.OUT_MU], self.ops_model_output[C.OUT_SIGMA])
                         elif loss_type == C.MSE:
                             logli_term = -tf.reduce_sum(
                                 tf.square(self.target_pieces[idx] - self.ops_model_output[C.OUT_MU]), axis=2,
@@ -197,8 +197,7 @@ class BaseTemporalModel(object):
                         else:
                             raise Exception(loss_type + " is not implemented.")
 
-                        nll_loss_term = -self.nll_loss_config['weight'][idx]*self.reduce_loss_fn(
-                            self.seq_loss_mask*logli_term)
+                        nll_loss_term = -self.nll_loss_config['weight'][idx]*self.reduce_loss_fn(self.seq_loss_mask*logli_term)
                         self.ops_loss[loss_key] = nll_loss_term
         else:
             for loss_name, loss_entry in self.loss_config.items():
@@ -210,10 +209,9 @@ class BaseTemporalModel(object):
                     with tf.name_scope(loss_key):
                         # Negative log likelihood loss.
                         if loss_type == C.NLL_NORMAL:
-                            logli_term = tf_model_utils.logli_normal_isotropic(self.target_pieces[target_idx],
-                                                                               self.ops_model_output[
-                                                                                   out_key + C.SUF_MU],
-                                                                               self.ops_model_output[out_key + C.SUF_SIGMA])
+                            logli_term = tf_model_utils.logli_normal_isotropic(
+                                self.target_pieces[target_idx], 
+                                self.ops_model_output[out_key + C.SUF_MU], self.ops_model_output[out_key + C.SUF_SIGMA])
                         elif loss_type == C.MSE:
                             logli_term = -tf.reduce_sum(
                                 tf.square(self.target_pieces[target_idx] - self.ops_model_output[out_key + C.SUF_MU]),
@@ -261,13 +259,13 @@ class BaseTemporalModel(object):
             for loss_name, _ in self.ops_loss.items():
                 self.container_loss[loss_name] = 0
                 self.container_loss_placeholders[loss_name] = tf.placeholder(tf.float32, shape=[])
-                tf.summary.scalar(loss_name, self.container_loss_placeholders[loss_name],
-                                  collections=[self.mode + '_summary_plot', self.mode + '_loss'])
+                tf.summary.scalar(
+                    loss_name, self.container_loss_placeholders[loss_name], collections=[self.mode + '_summary_plot', self.mode + '_loss'])
                 self.container_validation_feed_dict[self.container_loss_placeholders[loss_name]] = 0.0
 
         for summary_name, scalar_summary_op in self.ops_scalar_summary.items():
-            tf.summary.scalar(summary_name, scalar_summary_op,
-                              collections=[self.mode + '_summary_plot', self.mode + '_scalar_summary'])
+            tf.summary.scalar(
+                summary_name, scalar_summary_op, collections=[self.mode + '_summary_plot', self.mode + '_scalar_summary'])
 
     def finalise_graph(self):
         """
@@ -390,7 +388,7 @@ class BaseTemporalModel(object):
             num_param += np.prod(v.shape.as_list())
 
         self.num_parameters = num_param
-        print("# of parameters: " + str(num_param))
+        print("number of parameters: " + str(num_param))
         self.config.set('total_parameters', int(self.num_parameters), override=True)
 
     ########################################
@@ -475,11 +473,9 @@ class BaseRNN(BaseTemporalModel):
         if self.input_layer_config is not None:
             with tf.variable_scope('input_layer', reuse=self.reuse):
                 if self.input_layer_config.get("dropout_rate", 0) > 0:
-                    self.inputs_hidden = tf.layers.dropout(self.pl_inputs,
-                                                           rate=self.input_layer_config.get("dropout_rate"),
-                                                           noise_shape=None,
-                                                           seed=17,
-                                                           training=self.is_training)
+                    self.inputs_hidden = tf.layers.dropout(
+                        self.pl_inputs, rate=self.input_layer_config.get("dropout_rate"), noise_shape=None, seed=17,
+                        training=self.is_training)
                 else:
                     self.inputs_hidden = self.pl_inputs
 
@@ -495,11 +491,8 @@ class BaseRNN(BaseTemporalModel):
         Builds RNN layer by using dynamic_rnn wrapper of Tensorflow.
         """
         with tf.variable_scope("rnn_layer", reuse=self.reuse):
-            self.rnn_outputs, self.rnn_output_state = tf.nn.dynamic_rnn(self.cell,
-                                                                        self.inputs_hidden,
-                                                                        sequence_length=self.pl_seq_length,
-                                                                        initial_state=self.initial_states,
-                                                                        dtype=tf.float32)
+            self.rnn_outputs, self.rnn_output_state = tf.nn.dynamic_rnn(
+                self.cell, self.inputs_hidden, sequence_length=self.pl_seq_length, initial_state=self.initial_states, dtype=tf.float32)
             self.output_layer_inputs = self.rnn_outputs
             self.ops_evaluation['state'] = self.rnn_output_state
 
@@ -516,10 +509,9 @@ class BaseRNN(BaseTemporalModel):
             key = self.output_layer_config['out_keys'][idx]
 
             with tf.variable_scope('output_layer_' + key, reuse=self.reuse):
-                flat_out = linear(input_=flat_outputs_hidden,
-                                  output_size=self.output_layer_config['out_dims'][idx],
-                                  activation_fn=self.output_layer_config['out_activation_fn'][idx],
-                                  is_training=self.is_training)
+                flat_out = linear(
+                    input_=flat_outputs_hidden, output_size=self.output_layer_config['out_dims'][idx],
+                    activation_fn=self.output_layer_config['out_activation_fn'][idx], is_training=self.is_training)
 
                 self.ops_model_output[key] = self.temporal_tensor(flat_out)
 
