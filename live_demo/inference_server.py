@@ -276,46 +276,48 @@ class InferenceRunner(Thread):
         if filename.endswith('.pkl'):
             # This is a pickle file that contains a motion sequence stored in angle-axis format
             sample_sequence = pkl.load(open(filename, 'rb'), encoding='latin1')
-#             poses = np.array(sample_sequence["gt"])
+            if "gt" in list(sample_sequence.keys()):
+                poses = np.array(sample_sequence["gt"])
 
-            # for fetching the SMPL poses from the synthetic dataset
-            pss_15jnt_rt = np.array(sample_sequence["poses"])
-            pss_24jnt_aa = np.zeros((pss_15jnt_rt.shape[0], 72))
-            for psId in range(pss_15jnt_rt.shape[0]):
-                ps_24jnt_aa = np.zeros((1, 1, 24, 3))
-                # convert the SMPL pose into angle axis format
-                ps_15jnt_aa = matrot2axisangle(pss_15jnt_rt[psId].reshape(1, 1, 15, 9))
-                # only the 15 major joints of the body are contained in the synthetic data
-                # the rest of 9 joints (until 24) will be set to 0
-                jnt_null = np.zeros((1, 1, 1, 3))
-                ps_24jnt_aa[0][0][0] = jnt_null
-                ps_24jnt_aa[0][0][1] = ps_15jnt_aa[0][0][0]
-                ps_24jnt_aa[0][0][2] = ps_15jnt_aa[0][0][1]
-                ps_24jnt_aa[0][0][3] = ps_15jnt_aa[0][0][2]
-                ps_24jnt_aa[0][0][4] = ps_15jnt_aa[0][0][3]
-                ps_24jnt_aa[0][0][5] = ps_15jnt_aa[0][0][4]
-                ps_24jnt_aa[0][0][6] = ps_15jnt_aa[0][0][5]
-                ps_24jnt_aa[0][0][7] = ps_15jnt_aa[0][0][6]
-                ps_24jnt_aa[0][0][8] = ps_15jnt_aa[0][0][7]
-                ps_24jnt_aa[0][0][9] = jnt_null
-                ps_24jnt_aa[0][0][10] = ps_15jnt_aa[0][0][8]
-                ps_24jnt_aa[0][0][11] = ps_15jnt_aa[0][0][9]
-                ps_24jnt_aa[0][0][12] = jnt_null
-                ps_24jnt_aa[0][0][13] = jnt_null
-                ps_24jnt_aa[0][0][14] = jnt_null
-                ps_24jnt_aa[0][0][15] = ps_15jnt_aa[0][0][10]
-                ps_24jnt_aa[0][0][16] = ps_15jnt_aa[0][0][11]
-                ps_24jnt_aa[0][0][17] = ps_15jnt_aa[0][0][12]
-                ps_24jnt_aa[0][0][18] = ps_15jnt_aa[0][0][13]
-                ps_24jnt_aa[0][0][19] = ps_15jnt_aa[0][0][14]
-                ps_24jnt_aa[0][0][20] = jnt_null
-                ps_24jnt_aa[0][0][21] = jnt_null
-                ps_24jnt_aa[0][0][22] = jnt_null
-                ps_24jnt_aa[0][0][23] = jnt_null
+            if "poses" in list(sample_sequence.keys()):
+                # for fetching the SMPL poses from the synthetic dataset
+                pss_15jnt_rt = np.array(sample_sequence["poses"])
+                pss_24jnt_aa = np.zeros((pss_15jnt_rt.shape[0], 72))
+                for psId in range(pss_15jnt_rt.shape[0]):
+                    ps_24jnt_aa = np.zeros((1, 1, 24, 3))
+                    # convert the SMPL pose into angle axis format
+                    ps_15jnt_aa = matrot2axisangle(pss_15jnt_rt[psId].reshape(1, 1, 15, 9))
+                    # only the 15 major joints of the body are contained in the synthetic data
+                    # the rest of 9 joints (until 24) will be set to 0
+                    jnt_null = np.zeros((1, 1, 1, 3))
+                    ps_24jnt_aa[0][0][0] = jnt_null
+                    ps_24jnt_aa[0][0][1] = ps_15jnt_aa[0][0][0]
+                    ps_24jnt_aa[0][0][2] = ps_15jnt_aa[0][0][1]
+                    ps_24jnt_aa[0][0][3] = ps_15jnt_aa[0][0][2]
+                    ps_24jnt_aa[0][0][4] = ps_15jnt_aa[0][0][3]
+                    ps_24jnt_aa[0][0][5] = ps_15jnt_aa[0][0][4]
+                    ps_24jnt_aa[0][0][6] = ps_15jnt_aa[0][0][5]
+                    ps_24jnt_aa[0][0][7] = ps_15jnt_aa[0][0][6]
+                    ps_24jnt_aa[0][0][8] = ps_15jnt_aa[0][0][7]
+                    ps_24jnt_aa[0][0][9] = jnt_null
+                    ps_24jnt_aa[0][0][10] = ps_15jnt_aa[0][0][8]
+                    ps_24jnt_aa[0][0][11] = ps_15jnt_aa[0][0][9]
+                    ps_24jnt_aa[0][0][12] = jnt_null
+                    ps_24jnt_aa[0][0][13] = jnt_null
+                    ps_24jnt_aa[0][0][14] = jnt_null
+                    ps_24jnt_aa[0][0][15] = ps_15jnt_aa[0][0][10]
+                    ps_24jnt_aa[0][0][16] = ps_15jnt_aa[0][0][11]
+                    ps_24jnt_aa[0][0][17] = ps_15jnt_aa[0][0][12]
+                    ps_24jnt_aa[0][0][18] = ps_15jnt_aa[0][0][13]
+                    ps_24jnt_aa[0][0][19] = ps_15jnt_aa[0][0][14]
+                    ps_24jnt_aa[0][0][20] = jnt_null
+                    ps_24jnt_aa[0][0][21] = jnt_null
+                    ps_24jnt_aa[0][0][22] = jnt_null
+                    ps_24jnt_aa[0][0][23] = jnt_null
 
-                pss_24jnt_aa[psId] = ps_24jnt_aa.reshape(72,)
+                    pss_24jnt_aa[psId] = ps_24jnt_aa.reshape(72,)
 
-            poses = pss_24jnt_aa
+                poses = pss_24jnt_aa
 
         elif filename.endswith('.npz'):
             # This is a numpy file that was produced using the evaluation code
