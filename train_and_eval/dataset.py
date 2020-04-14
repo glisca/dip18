@@ -79,6 +79,33 @@ class ImuDataset(BaseDataset):
         self.samples_smpl = self.data_dict['smpl_pose']
         self.samples_acc = self.data_dict['acceleration']
         self.samples_ori = self.data_dict['orientation']
+        
+        # [left_lower_wrist, right_lower_wrist, left_lower_leg, right_loewr_leg, head, back]
+        # - excerpt rfrom ./Synthetic_60fps/metadata.txt file.
+        
+        # 6IMUs (arms, legs, head, pelvis) 
+        imu_ids = [0, 1, 2, 3, 4] # pelvis used for normalization
+        
+        # 5IMUs (arms, legs, pelvis)
+        imu_ids = [0, 1, 2, 3] # pelvis used for normalization
+        
+        # 4IMUs (arms, head, pelvis)
+        imu_ids = [0, 1, 4] # pelvis used for normalization
+
+        # 4IMUs (legs, head, pelvis)
+        imu_ids = [2, 3, 4] # pelvis used for normalization
+        
+        # 3IMUs (arms, pelvis)
+        imu_ids = [0, 1] # pelvis used for normalization
+
+        # 3IMUs (legs, pelvis)
+        imu_ids = [2, 3] # pelvis used for normalization
+
+        imu_acc_ids = np.asarray([np.arange(3*imu_id, 3*(imu_id+1), 1) for imu_id in imu_ids]).flatten()
+        imu_ori_ids = np.asarray([np.arange(9*imu_id, 9*(imu_id+1), 1) for imu_id in imu_ids]).flatten()
+
+        self.samples_acc = np.array([imu_acc[:, imu_acc_ids] for imu_acc in self.samples_acc])
+        self.samples_ori = np.array([imu_ori[:, imu_ori_ids] for imu_ori in self.samples_ori])
 
         self.file_id = self.data_dict.get('file_id', None)
         self.data_id = self.data_dict.get('data_id', None)
@@ -112,6 +139,14 @@ class ImuDataset(BaseDataset):
         if data_stats is None:
             # take the stats stored in the data set
             data_stats = self.data_dict.get('statistics').tolist() if 'statistics' in self.data_dict else {}
+            
+        for key in list(data_stats["acceleration"].keys()):
+            if data_stats["acceleration"][key].shape:
+                data_stats["acceleration"][key] = data_stats["acceleration"][key][imu_acc_ids]
+                
+        for key in list(data_stats["orientation"].keys()):
+            if data_stats["orientation"][key].shape:
+                data_stats["orientation"][key] = data_stats["orientation"][key][imu_ori_ids]
 
         self.ori_stats = data_stats['orientation']
         self.acc_stats = data_stats['acceleration']

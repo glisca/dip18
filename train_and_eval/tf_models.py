@@ -840,7 +840,18 @@ class IMUWrapper(object):
     def __init__(self, config, session, reuse, mode, placeholders, input_dims, target_dims, data_stats):
         self.config = config
 
+        # 6IMUs (arms, legs, head, pelvis) - normalized by pelvis
         ORI_SIZE, ACC_SIZE = 45, 15
+        
+        # 5IMUs (arms, legs, pelvis) - normalized by pelvis
+        ORI_SIZE, ACC_SIZE = 36, 12
+        
+        # 3IMUs (arms or legs, head, pelvis) - normalized by pelvis
+        ORI_SIZE, ACC_SIZE = 27, 9
+        
+        # 3IMUs (arms or legs, pelvis) - normalized by pelvis
+        ORI_SIZE, ACC_SIZE = 18, 6
+        
         self.use_acc_loss = mode == "training" and self.config.get("use_acc_loss", False)
         self.use_ori_loss = mode == "training" and self.config.get("use_ori_loss", False)
         self.ignore_acc = config.get('ignore_acc_input')
