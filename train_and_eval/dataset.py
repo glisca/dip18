@@ -83,23 +83,23 @@ class ImuDataset(BaseDataset):
         # [left_lower_wrist, right_lower_wrist, left_lower_leg, right_loewr_leg, head, back]
         # - excerpt rfrom ./Synthetic_60fps/metadata.txt file.
         
-        # 6IMUs (arms, legs, head, pelvis) 
-        imu_ids = [0, 1, 2, 3, 4] # pelvis used for normalization
+        # 6IMUs (arms, legs, head, pelvis) - the pelvis normalizes the others
+        imu_ids = [0, 1, 2, 3, 4]
         
-        # 5IMUs (arms, legs, pelvis)
-        imu_ids = [0, 1, 2, 3] # pelvis used for normalization
+        # 5IMUs (arms, legs, pelvis) - the pelvis normalizes the others
+        imu_ids = [0, 1, 2, 3]
         
-        # 4IMUs (arms, head, pelvis)
-        imu_ids = [0, 1, 4] # pelvis used for normalization
+        # 4IMUs (arms, head, pelvis) - the pelvis normalizes the others
+        imu_ids = [0, 1, 4]
 
-        # 4IMUs (legs, head, pelvis)
-        imu_ids = [2, 3, 4] # pelvis used for normalization
+        # 4IMUs (legs, head, pelvis) - the pelvis normalizes the others
+        imu_ids = [2, 3, 4]
         
-        # 3IMUs (arms, pelvis)
-        imu_ids = [0, 1] # pelvis used for normalization
+        # 3IMUs (arms, pelvis) - the pelvis normalizes the others
+        imu_ids = [0, 1]
 
-        # 3IMUs (legs, pelvis)
-        imu_ids = [2, 3] # pelvis used for normalization
+        # 3IMUs (legs, pelvis) - the pelvis normalizes the others
+        imu_ids = [2, 3]
 
         imu_acc_ids = np.asarray([np.arange(3*imu_id, 3*(imu_id+1), 1) for imu_id in imu_ids]).flatten()
         imu_ori_ids = np.asarray([np.arange(9*imu_id, 9*(imu_id+1), 1) for imu_id in imu_ids]).flatten()
