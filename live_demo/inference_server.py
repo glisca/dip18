@@ -275,6 +275,7 @@ class InferenceRunner(Thread):
     def load_sample_sequence(self, filename):
         if filename.endswith('.pkl'):
             # This is a pickle file that contains a motion sequence stored in angle-axis format
+            print("\u001b[32mLoading training data evaluation file: {}\u001b[0m".format(filename))
             sample_sequence = pkl.load(open(filename, 'rb'), encoding='latin1')
             if "gt" in list(sample_sequence.keys()):
                 poses = np.array(sample_sequence["gt"])
@@ -321,10 +322,18 @@ class InferenceRunner(Thread):
 
         elif filename.endswith('.npz'):
             # This is a numpy file that was produced using the evaluation code
-            preds = np.load(filename)['prediction']
+            print("\u001b[32mLoading evaluation file: {}\u001b[0m".format(filename))
+            preds = np.load(filename)["prediction"]
 
             # Choose the first sample in the file to be displayed
+            # hands
             pred = preds[1]
+
+            # whole body
+            pred = preds[5]
+
+            # legs
+            pred = preds[8]
 
             # This is in rotation matrix format, so convert to angle-axis
             poses = np.reshape(pred, [pred.shape[0], -1, 3, 3])
