@@ -3,7 +3,6 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - certifi=2018.8.24=py35_1
   - nodejs=12.4.0=he1b5a44_0
   - _libgcc_mutex=0.1=main
   - backcall=0.1.0=py35_0
@@ -12,6 +11,7 @@ dependencies:
   - bzip2=1.0.8=h7b6447c_0
   - ca-certificates=2020.1.1=0
   - cairo=1.14.12=h8948797_3
+  - certifi=2018.8.24=py35_1
   - cudatoolkit=8.0=3
   - cudnn=6.0.21=cuda8.0_0
   - cython=0.28.5=py35hf484d3e_0
@@ -105,6 +105,7 @@ dependencies:
   - testpath=0.4.4=py_0
   - tk=8.6.8=hbc83047_0
   - tornado=5.1.1=py35h7b6447c_0
+  - tqdm=4.44.1=py_0
   - traitlets=4.3.2=py35ha522a97_0
   - wcwidth=0.1.7=py35hcd08066_0
   - webencodings=0.5.1=py35_1
