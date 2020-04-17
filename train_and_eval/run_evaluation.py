@@ -214,8 +214,8 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
             performance_text_over_datasets += performance_text_format.format(eval_key, sip_stats[0], sip_stats[1])
 
             if save_predictions:
-                out = {"prediction": prediction_list,
-                       "gt": gt_list}
+                out = {"gt": prediction_list,
+                       "prediction": gt_list}
                 file_name = eval_key + "_" + eval_str if eval_str is not None else eval_key
                 np.savez_compressed(os.path.join(config.get("eval_dir"), file_name), **out)
 
