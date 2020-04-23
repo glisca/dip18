@@ -309,10 +309,16 @@ def compute_metrics(prediction, target, compute_positional_error=False):
     targ_g = smpl_rot_to_global(targ)
 
     angles = joint_angle_error(pred_g, targ_g)
-    mm = np.zeros([1, SMPL_NR_JOINTS])  # Ignore positional loss in Python 3.
+    mm = joint_location_error(pred_g, targ_g)
 
+#     tqdm.write(
+#         "\u001b[31mjoint_location_error               : \n%s\u001b[0m" % 
+#         np.array_str(mm[0], precision=3, suppress_small=True))
+#     tqdm.write(
+#         "\u001b[31mjoint_position_error               : \n%s\u001b[0m" % 
+#         np.array_str(angles[0], precision=3, suppress_small=True))
+    
     return angles, mm
-
 
 class Stats(object):
     def __init__(self, tracking_joints=None, sip_evaluation_joints=None, evaluation_joints=None, logger=None):
@@ -332,24 +338,34 @@ class Stats(object):
             return False
 
         sip_stats = self.get_stats(self.sip_evaluation_joints)
-        tracking_stats = self.get_stats(self.tracking_joints)
-        eval_stats = self.get_stats(self.evaluation_joints)
-
         self.logger.print('\n*** SIP Evaluation Error ***\n')
+        self.logger.print('considered joints              : {}\n'.format(self.sip_evaluation_joints))
         self.logger.print('average joint angle error (deg): {:.4f} (+/- {:.3f})\n'.format(sip_stats[0], sip_stats[1]))
         self.logger.print('average positional error (m)   : {:.4f} (+/- {:.3f})\n'.format(sip_stats[2], sip_stats[3]))
 
+        tracking_stats = self.get_stats(self.tracking_joints)
         self.logger.print('\n*** Tracking Error ***\n')
+        self.logger.print('considered joints              : {}\n'.format(self.tracking_joints))
         self.logger.print('average joint angle error (deg): {:.4f} (+/- {:.3f})\n'.format(tracking_stats[0], tracking_stats[1]))
         self.logger.print('average positional error (m)   : {:.4f} (+/- {:.3f})\n'.format(tracking_stats[2], tracking_stats[3]))
 
+        eval_stats = self.get_stats(self.evaluation_joints)
         self.logger.print('\n*** Remaining Evaluation Error ***\n')
+        self.logger.print('considered joints              : {}\n'.format(self.evaluation_joints))
         self.logger.print('average joint angle error (deg): {:.4f} (+/- {:.3f})\n'.format(eval_stats[0], eval_stats[1]))
         self.logger.print('average positional error (m)   : {:.4f} (+/- {:.3f})\n'.format(eval_stats[2], eval_stats[3]))
 
         return True
 
     def get_stats(self, joint_idxs):
+        """
+        todo(lisca): docstrings!
+        """
+
+#         tqdm.write(
+#             "\u001b[31mjoint_idxs                                 : %s\u001b[0m" % 
+#             np.array_str(np.array(joint_idxs), precision=3, suppress_small=True))
+
         total_joint_angle_diff = np.mean(rad2deg(self.joint_angle_diffs[:, joint_idxs]))
         std_per_joint = np.std(rad2deg(self.joint_angle_diffs[:, joint_idxs]), axis=0)
         joint_angle_std = np.mean(std_per_joint)
@@ -357,9 +373,13 @@ class Stats(object):
         total_mm_diff = np.mean(self.euclidean_diffs[:, joint_idxs])
         std_per_joint = np.std(self.euclidean_diffs[:, joint_idxs], axis=0)
         mm_std = np.mean(std_per_joint)
+
         return total_joint_angle_diff, joint_angle_std, total_mm_diff, mm_std
 
     def add(self, ja_diffs, euc_diffs):
+        """
+        todo(lisca): docstrings!
+        """
         if self.joint_angle_diffs is None:
             self.joint_angle_diffs = np.zeros([0, ja_diffs.shape[-1]])
         if self.euclidean_diffs is None:
@@ -367,6 +387,13 @@ class Stats(object):
 
         self.joint_angle_diffs = np.concatenate([self.joint_angle_diffs, ja_diffs])
         self.euclidean_diffs = np.concatenate([self.euclidean_diffs, euc_diffs])
+
+#         tqdm.write(
+#             "\u001b[31mjoint_angle_diffs                          : \n%s\u001b[0m" %
+#             np.array_str(len(self.joint_angle_diffs), precision=3, suppress_small=True))
+#         tqdm.write(
+#             "\u001b[31meuclidean_diffs                            : \n%s\u001b[0m" %
+#             np.array_str(len(self.euclidean_diffs), precision=3, suppress_small=True))
 
     def get_sip_stats(self):
         return self.get_stats(self.sip_evaluation_joints)

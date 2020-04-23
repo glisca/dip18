@@ -24,6 +24,7 @@ from tf_models import *
 from tf_data_feeder import DataFeederTF
 from configuration import Configuration
 from utils import Logger
+from tqdm import tqdm
 
 
 def undo_smpl(dataset_obj, pose, mask=None, aa_representation=False):
@@ -106,7 +107,16 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
             
             assert eval_dataset.num_samples % batch_size == 0, 'number of samples must be divisible by batch size'
             num_eval_iterations = int(eval_dataset.num_samples/batch_size)
-            print("num_eval_iterations {}".format(num_eval_iterations))
+
+            tqdm.write(
+                "\u001b[31mnum_samples                                : %s\u001b[0m" %
+                str(eval_dataset.num_samples))
+            tqdm.write(
+                "\u001b[31mbatch_size                                 : %s\u001b[0m" %
+                str(batch_size))
+            tqdm.write(
+                "\u001b[31mnum_eval_iterations                        : %s\u001b[0m" %
+                str(num_eval_iterations))
 
             with tf.name_scope(eval_key):
                 eval_data_feeder = DataFeederTF(eval_dataset, 1, batch_size, queue_capacity=1024, shuffle=False)
@@ -193,7 +203,9 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                         gt_list.extend(targ)
 
                     # replace root with sensor data
-                    for j in range(batch_size):
+                    batch_size_tqdm = tqdm(range(batch_size))
+                    for j in batch_size_tqdm:
+                        batch_size_tqdm.set_description("\u001b[31mIterating the testing batch ...            ")
                         imu_root = np.reshape(np.eye(3), [-1]) if dof == 9 else np.array([1.0, 0.0, 0.0, 0.0])
                         pred[j][:, :dof] = imu_root
                         targ[j][:, :dof] = imu_root

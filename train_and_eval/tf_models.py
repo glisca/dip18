@@ -32,6 +32,7 @@ import math
 import copy
 
 import tf_model_utils
+from tqdm import tqdm
 from tf_model_utils import get_reduce_loss_func, get_rnn_cell, linear, fully_connected_layer, get_activation_fn
 from constants import Constants
 
@@ -807,10 +808,11 @@ class BiRNN(BaseRNN):
         loss = 0.0
         feed_dict = {}
 
-        for step in range(seq_len):
+        seq_len_tqdm = tqdm(range(seq_len))
+        for step in seq_len_tqdm:
+            seq_len_tqdm.set_description("\u001b[31mreconstructing chunks                      \u001b[0m")
             start_idx = max(step-len_past, 0)
             end_idx = min(step+len_future+1, seq_len)
-            print('\rprocessing step {}/{} from {} to {}'.format(step+1, seq_len, start_idx, end_idx), end='')
 
             feed_dict[self.pl_inputs] = input_sequence[:, start_idx:end_idx]
             feed_dict[self.pl_seq_length] = np.array([end_idx-start_idx]*batch_size)
