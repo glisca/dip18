@@ -22,11 +22,20 @@ import numpy as np
 import quaternion
 import cv2
 
+import torch
 
+from tqdm import tqdm
+from human_body_prior.body_model.body_model import BodyModel
+from human_body_prior.tools.omni_tools import copy2cpu as c2c
+
+#                    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+#                    0  1  1  1  1  1  1  0  0  1  0  0  1  1  1  1  1  1  1  1  0  0  0  0
 SMPL_MAJOR_JOINTS = [1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19]
 SMPL_NR_JOINTS = 24
+#                0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  15  16  17  18  19  20  21  22  23
 SMPL_PARENTS = [-1, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 12, 13, 14, 16, 17, 18, 19, 20, 21]
 
+computing_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def get_model_dir_timestamp(prefix="", suffix="", connector="_"):
     """
@@ -276,6 +285,81 @@ def joint_angle_error(predicted_pose_params, target_pose_params):
 
     return np.reshape(np.array(angles), [seq_length, n_joints])
 
+def compute_joint_locations(pose_params):
+    """
+    todo(lisca): docstrings!
+    """
+    # Conver into axis-angle format.
+    pose_params = rot_matrix_to_aa(pose_params)
+    
+    smplh_path = "/home/lisca/models/smplh/male/model.npz"
+    dmpls_path = "/home/lisca/models/dmpls/male/model.npz"
+    nr_betas = 10
+    nr_dmpls = 8
+
+    # Consider the same body shape for all tests.
+    # - copied from the frame 0 of amass example.
+    betas = np.array([ 
+        2.2140,  2.0062,  1.7169, -1.6117,  0.5180,  1.4124, -0.1580, -0.1450, 0.0671,  1.9010]).reshape((1, -1))
+    betas = torch.Tensor(betas).to(computing_device)
+    
+    #
+    smpl_model = BodyModel(
+        bm_path=smplh_path, num_betas=nr_betas, path_dmpl=dmpls_path, num_dmpls=nr_dmpls).to(computing_device)
+
+    #
+    sample_joint_locations = []
+    pose_params_tqdm = tqdm(pose_params)
+    for smpl_pose in pose_params_tqdm:
+        pose_params_tqdm.set_description("SMPL poses -> SMPL joint locations ...     ")
+        # Out of 24 joints (72 elements in axis angle, cut out the root joint and the last two joints.
+        pose_body = torch.Tensor(smpl_pose[3:66].reshape((1, -1))).to(computing_device)
+
+        # todo(lisca): Carefull!!! 
+        smpl_in_pose = smpl_model(pose_body=pose_body, betas=betas)
+
+        joints = c2c(smpl_in_pose.Jtr[0])
+        sample_joint_locations.append(joints)
+
+    return np.array(sample_joint_locations)
+
+def joint_location_error(predicted_pose_params, target_pose_params):
+    assert predicted_pose_params.shape[0] == target_pose_params.shape[0], 'target_pose_params must match predicted_pose_params'
+    assert predicted_pose_params.shape[1] == target_pose_params.shape[1], 'target_pose_params must match predicted_pose_params'
+
+    seq_length, dof = predicted_pose_params.shape[0], predicted_pose_params.shape[1]
+    assert dof == 216, 'unexpected number of degrees of freedom'
+
+    # reshape to have rotation matrices explicit
+    n_joints = dof // 9
+
+    # Put the SMPL model in predicted configuration and take the location of the joints.
+    # - joint_locations_predicted
+    tqdm.write("\u001b[31mcomputing predicted joint locations        :\u001b[0m")
+    predicted_joint_locations = compute_joint_locations(predicted_pose_params)
+    
+    # Put the SMPL model in target configuration and take the locations of the joints.
+    # - joint_locations_target
+    tqdm.write("\u001b[31mcomputing target joint locations           :\u001b[0m")
+    target_joint_locations = compute_joint_locations(target_pose_params)
+    
+    # [(xt - xp)**2, (yt - yp)**2, (zt - zp)**2]
+    diffs_squared = np.square(target_joint_locations - predicted_joint_locations)
+    print("diffs_squared {}".format(np.all(diffs_squared >= 0.0)))
+    
+    # [(xt - xp)**2 + (yt - yp)**2 + (zt - zp)**2]
+    sum_diffs_squared = np.sum(diffs_squared, axis=2)
+    # sqrt([(xt - xp)**2 + (yt - yp)**2 + (zt - zp)**2])
+    joints_error = np.sqrt(sum_diffs_squared)
+    
+    # From all 52 joints live out the errors for fingers.
+    joint_locations_error = joints_error[:, :24]
+
+#     tqdm.write(
+#         "\u001b[31mjoint_location_error               : \n%s\u001b[0m" % 
+#         np.array_str(joint_locations_error[0], precision=3, suppress_small=True))
+    
+    return joint_locations_error
 
 def compute_metrics(prediction, target, compute_positional_error=False):
     """
