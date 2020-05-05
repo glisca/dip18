@@ -85,10 +85,18 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
     performance_text_over_datasets = "\nSummary of model " + config.get('model_id') + "\n"
 
     for eval_key, batch_size in datasets:
+        # save the evaluation results per evaluation configuration
+        evaluation_logger_file_name = eval_key + "_" + eval_str + ".txt" if eval_str is not None else eval_key
+        evaluation_logger = Logger(os.path.join(config.get('eval_dir'), evaluation_logger_file_name), sys.stdout)
+        
         logger.print('------------------------------------------')
         logger.print('\nEvaluation on ' + eval_key)
         logger.print('\n------------------------------------------\n')
 
+        evaluation_logger.print('------------------------------------------')
+        evaluation_logger.print('\nEvaluation on ' + eval_key)
+        evaluation_logger.print('\n------------------------------------------\n')
+        
         # Clean slate.
         tf.reset_default_graph()
 
@@ -168,7 +176,8 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
             all_sensors = utils.SMPL_MAJOR_JOINTS if config.get('use_reduced_smpl') else list(range(utils.SMPL_NR_JOINTS))
             remaining_eval_sensors = [s for s in all_sensors if s not in tracking_sensors and s not in sip_eval_sensors]
 
-            with utils.Stats(tracking_sensors, sip_eval_sensors, remaining_eval_sensors, logger) as stats:
+            with utils.Stats(tracking_sensors, sip_eval_sensors, remaining_eval_sensors, logger) as stats, \
+                utils.Stats(tracking_sensors, sip_eval_sensors, remaining_eval_sensors, evaluation_logger) as evaluation_stats:
                 model_evaluation_ops = dict()
                 model_evaluation_ops['loss'] = eval_model.ops_loss
                 model_evaluation_ops['mask'] = eval_model.seq_loss_mask
@@ -213,6 +222,7 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                         ja_diffs, euc_diffs = utils.compute_metrics(
                             prediction=pred[j:j + 1], target=targ[j:j + 1], compute_positional_error=False)
                         stats.add(ja_diffs, euc_diffs)
+                        evaluation_stats.add(ja_diffs, euc_diffs)
 
                 total_loss = total_loss/float(n_data) if n_data > 0 else 0.0
                 total_loss_l2 = total_loss_l2/float(n_data) if n_data > 0 else 0.0
@@ -221,6 +231,10 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                 logger.print('average main loss per time step: {}\n'.format(total_loss))
                 logger.print('average l2 loss per time step  : {}\n'.format(total_loss_l2))
 
+                evaluation_logger.print('\n*** Loss ***\n')
+                evaluation_logger.print('average main loss per time step: {}\n'.format(total_loss))
+                evaluation_logger.print('average l2 loss per time step  : {}\n'.format(total_loss_l2))
+                
                 sip_stats = stats.get_sip_stats()
 
             performance_text_over_datasets += performance_text_format.format(eval_key, sip_stats[0], sip_stats[1])
@@ -230,6 +244,9 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
                        "gt": gt_list}
                 file_name = eval_key + "_" + eval_str if eval_str is not None else eval_key
                 np.savez_compressed(os.path.join(config.get("eval_dir"), file_name), **out)
+                
+                evaluation_logger.print(performance_text_over_datasets)
+                evaluation_logger.close()
 
             sess.run(eval_data_feeder.input_queue.close(cancel_pending_enqueues=True))
             coord.request_stop()
@@ -237,7 +254,6 @@ def do_evaluation(config, datasets, len_past, len_future, save_predictions=False
 
     logger.print(performance_text_over_datasets)
     logger.close()
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
