@@ -27,6 +27,8 @@ import pickle as pkl
 import datetime
 
 from threading import Thread
+from tqdm import tqdm
+
 from configuration import Configuration
 from constants import Constants
 from utils import SMPL_NR_JOINTS, smpl_reduced_to_full
@@ -324,7 +326,14 @@ class InferenceRunner(Thread):
             preds = np.load(filename)['prediction']
 
             # Choose the first sample in the file to be displayed
-            pred = preds[1]
+            sample_id = 3
+            tqdm.write(
+                "\u001b[33mtotal samples                               : %s\u001b[0m" %
+                str(len(preds)))
+            tqdm.write(
+                "\u001b[32msending sample with id: {} and {} frames    : \u001b[0m".format(
+                str(sample_id), str(preds[sample_id].shape[0])))
+            pred = preds[sample_id]
 
             # This is in rotation matrix format, so convert to angle-axis
             poses = np.reshape(pred, [pred.shape[0], -1, 3, 3])
@@ -352,6 +361,9 @@ class InferenceRunner(Thread):
 
         self.next_frame += 1
         if self.next_frame >= len(self.sample_sequence['gt']):
+            tqdm.write(
+                "\u001b[35mreach the end of the file, starting again   : %s\u001b[0m" %
+                str(self.next_frame))
             self.next_frame = 0
 
     def send_previous_sample_frame(self):
